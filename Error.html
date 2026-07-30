@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GBBView - Error 404</title>
+    <style>
+        /* Grunddesign & Farben exakt aus Hauptseite */
+        :root {
+            --bg-color: #004d54; 
+            --bg-darker: #00363b;
+            --text-color: #ffffff;
+            --accent-yellow: #fff200;
+            --card-bg: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow-x: hidden;
+        }
+
+        /* Dünner Strich ganz oben */
+        .top-line {
+            height: 3px;
+            background-color: var(--accent-yellow);
+            width: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 100;
+        }
+
+        /* Header & Navigation */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            position: absolute;
+            top: 3px;
+            width: 100%;
+            z-index: 10;
+        }
+
+        .menu-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            width: 25px;
+            height: 18px;
+        }
+
+        .menu-btn span {
+            display: block;
+            height: 3px;
+            width: 100%;
+            background-color: var(--text-color);
+            border-radius: 2px;
+            transition: 0.3s;
+        }
+
+        .logo {
+            font-weight: bold;
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+            text-decoration: none;
+            color: var(--text-color);
+        }
+
+        .search-icon {
+            cursor: pointer;
+            font-size: 1.2rem;
+            background: none;
+            border: none;
+            color: white;
+        }
+
+        /* Seitliches Menü */
+        .side-menu {
+            position: fixed;
+            top: 0;
+            left: -280px;
+            width: 280px;
+            height: 100%;
+            background-color: var(--bg-darker);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+            transition: 0.3s ease;
+            z-index: 99;
+            padding: 80px 30px;
+        }
+
+        .side-menu.open { left: 0; }
+        .side-menu ul { list-style: none; }
+        .side-menu ul li { margin-bottom: 20px; }
+        .side-menu ul li a { color: var(--text-color); text-decoration: none; font-size: 1.2rem; transition: 0.2s; }
+        .side-menu ul li a:hover { color: var(--accent-yellow); }
+
+        .menu-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); display: none; z-index: 98;
+        }
+        .menu-overlay.show { display: block; }
+
+        /* Hauptbereich für Film-Details */
+        .main-container {
+            max-width: 1100px;
+            margin: 100px auto 40px auto;
+            padding: 0 20px;
+        }
+
+        /* Schickes Player-UI Gehäuse */
+        .player-container {
+            position: relative;
+            width: 100%;
+            background-color: #000;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            aspect-ratio: 16 / 9;
+        }
+
+        .player-container video {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: contain;
+        }
+
+        /* Custom Steuerleiste im Player */
+        .custom-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.85));
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 2;
+        }
+
+        .player-container:hover .custom-controls,
+        .player-container:focus-within .custom-controls {
+            opacity: 1;
+        }
+
+        .play-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.4rem;
+            cursor: pointer;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+        }
+
+        .play-btn:hover {
+            color: var(--accent-yellow);
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            flex-grow: 1;
+            position: relative;
+            height: 6px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: var(--accent-yellow);
+            border-radius: 3px;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .time-display {
+            font-size: 0.85rem;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .fullscreen-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .fullscreen-btn:hover {
+            color: var(--accent-yellow);
+        }
+
+        /* Film-Infos unter dem Player */
+        .movie-info-block {
+            margin-top: 30px;
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .movie-title {
+            font-size: 2.2rem;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+
+        .movie-meta {
+            font-size: 1rem;
+            color: var(--accent-yellow);
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .movie-description {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+
+        /* Zurück-Button */
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: bold;
+            margin-bottom: 20px;
+            transition: color 0.2s;
+        }
+
+        .btn-back:hover {
+            color: var(--accent-yellow);
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--bg-darker);
+            padding: 40px;
+            margin-top: 80px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .footer-links { margin-bottom: 20px; }
+        .footer-links a { color: var(--text-color); text-decoration: none; margin: 0 15px; }
+        .footer-links a:hover { color: var(--accent-yellow); }
+    </style>
+</head>
+<body>
+
+    <div class="top-line"></div>
+
+    <header>
+        <button class="menu-btn" onclick="toggleMenu()" aria-label="Menü öffnen">
+            <span></span><span></span><span></span>
+        </button>
+        <a href="https://gurkistanischebundesbahn.github.io/GBBView/" class="logo">GBBView</a>
+        <button class="search-icon" aria-label="Suche">&#9094;</button> 
+    </header>
+
+    <div class="menu-overlay" id="menuOverlay" onclick="toggleMenu()"></div>
+    <nav class="side-menu" id="sideMenu">
+        <ul>
+            <li><a href="https://gurkistanischebundesbahn.github.io/GBBView/">Startseite</a></li>
+            <li><a href="https://gurkistanischebundesbahn.github.io/GBBView/Filme">Filme</a></li>
+            <li><a href="https://gurkistanischebundesbahn.github.io/GBBView/Error">Serien</a></li>
+            <li><a href="https://gurkistanischebundesbahn.github.io/GBBView/Error">Dokus</a></li>
+        </ul>
+    </nav>
+
+    <!-- Inhalt der Filmseite -->
+    <main class="main-container">
+        
+        <!-- Zurück zur Übersicht -->
+        <a href="https://gurkistanischebundesbahn.github.io/GBBView/" class="btn-back">
+            <span>&#129128;</span> Zurück zur Startseite
+        </a>
+
+        <article class="movie-info-block">
+            <h1 class="movie-title">Error 404</h1>
+            <div class="movie-meta">Etwas ist schiefgegangen</div>
+            <p class="movie-description">
+                Huch! Diese Seite kennen wir nicht! Möglicherweise wurde sie gelöscht oder umbenannt. Vielleicht wird sie auch nur gerade noch gebaut. Probiere es mal, die Rechtschribung zu überprüfen. Vielleicht hast du dich auch vertippt!
+            </p>
+        </article>
+
+    </main>
+
+    <footer>
+        <div class="footer-links">
+            <a href="#">Impressum</a>
+            <a href="#">Datenschutz</a>
+            <a href="#">Kontakt</a>
+        </div>
+        <div>&copy; 2026 GBB. Alle Rechte vorbehalten. Website mit KI erstellt.</div>
+    </footer>
+
+    <script>
+        // Hamburger Menü Logik
+        function toggleMenu() {
+            const menu = document.getElementById('sideMenu');
+            const overlay = document.getElementById('menuOverlay');
+            menu.classList.toggle('open');
+            overlay.classList.toggle('show');
+        }
+
+        // Custom Video Player Logik
+        const video = document.getElementById('myVideo');
+        const playerContainer = document.getElementById('videoPlayerContainer');
+        const playBtn = document.getElementById('playBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const timeDisplay = document.getElementById('timeDisplay');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+        // Play / Pause Funktion
+        function togglePlay() {
+            if (video.paused) {
+                video.play();
+                playBtn.innerHTML = '&#10074;&#10074;'; // Pause-Symbol
+            } else {
+                video.pause();
+                playBtn.innerHTML = '&#9658;'; // Play-Symbol
+            }
+        }
+
+        playBtn.addEventListener('click', togglePlay);
+        video.addEventListener('click', togglePlay);
+
+        // Zeit- und Fortschrittsanzeige aktualisieren
+        function formatTime(seconds) {
+            const min = Math.floor(seconds / 60);
+            const sec = Math.floor(seconds % 60);
+            return `${min}:${sec < 10 ? '0' : ''}${sec}`;
+        }
+
+        video.addEventListener('timeupdate', () => {
+            const percentage = (video.currentTime / video.duration) * 100;
+            progressBar.style.width = percentage + '%';
+            
+            if(!isNaN(video.duration)) {
+                timeDisplay.textContent = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
+            }
+        });
+
+        // Klicken in der Progress-Bar zum Vorspulen
+        progressContainer.addEventListener('click', (e) => {
+            const rect = progressContainer.getBoundingClientRect();
+            const pos = (e.clientX - rect.left) / rect.width;
+            video.currentTime = pos * video.duration;
+        });
+
+        // Vollbild-Modus & Automatische Drehung am Smartphone
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                // In Vollbild gehen
+                if (playerContainer.requestFullscreen) {
+                    playerContainer.requestFullscreen();
+                } else if (playerContainer.webkitRequestFullscreen) { /* Safari */
+                    playerContainer.webkitRequestFullscreen();
+                }
+
+                // Smartphone automatisch seitlich drehen (Landscape)
+                if (screen.orientation && screen.orientation.lock) {
+                    screen.orientation.lock('landscape').catch((err) => {
+                        console.log("Orientierungssperre vom Gerät ignoriert oder nicht unterstützt.");
+                    });
+                }
+            } else {
+                // Vollbild verlassen
+                document.exitFullscreen();
+                if (screen.orientation && screen.orientation.unlock) {
+                    screen.orientation.unlock();
+                }
+            }
+        });
+
+        // Icon beim Verlassen des Vollbilds via ESC-Taste zurücksetzen
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement && screen.orientation && screen.orientation.unlock) {
+                screen.orientation.unlock();
+            }
+        });
+    </script>
+</body>
+</html>
