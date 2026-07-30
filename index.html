@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GBBView</title>
+    <style>
+        /* Grunddesign & Farben */
+        :root {
+            --bg-color: #004d54; /* Das dunkle Petrol aus dem Screenshot */
+            --bg-darker: #00363b;
+            --text-color: #ffffff;
+            --accent-yellow: #fff200;
+            --card-bg: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow-x: hidden;
+        }
+
+        /* 1. Der dünne Strich ganz oben */
+        .top-line {
+            height: 3px;
+            background-color: var(--accent-yellow);
+            width: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 100;
+        }
+
+        /* Header & Navigation */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            position: absolute;
+            top: 3px;
+            width: 100%;
+            z-index: 10;
+        }
+
+        /* Hamburger Menü Button */
+        .menu-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            width: 25px;
+            height: 18px;
+        }
+
+        .menu-btn span {
+            display: block;
+            height: 3px;
+            width: 100%;
+            background-color: var(--text-color);
+            border-radius: 2px;
+            transition: 0.3s;
+        }
+
+        .logo {
+            font-weight: bold;
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+        }
+
+        .search-icon {
+            cursor: pointer;
+            font-size: 1.2rem;
+            background: none;
+            border: none;
+            color: white;
+        }
+
+        /* Seitliches Menü (Slide-out) */
+        .side-menu {
+            position: fixed;
+            top: 0;
+            left: -280px;
+            width: 280px;
+            height: 100%;
+            background-color: var(--bg-darker);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+            transition: 0.3s ease;
+            z-index: 99;
+            padding: 80px 30px;
+        }
+
+        .side-menu.open {
+            left: 0;
+        }
+
+        .side-menu ul {
+            list-style: none;
+        }
+
+        .side-menu ul li {
+            margin-bottom: 20px;
+        }
+
+        .side-menu ul li a {
+            color: var(--text-color);
+            text-decoration: none;
+            font-size: 1.2rem;
+            transition: 0.2s;
+        }
+
+        .side-menu ul li a:hover {
+            color: var(--accent-yellow);
+        }
+
+        /* Overlay für das Menü */
+        .menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            z-index: 98;
+        }
+
+        .menu-overlay.show {
+            display: block;
+        }
+
+        /* Hero / Banner Bereich */
+        .hero {
+            position: relative;
+            min-height: 450px;
+            padding: 120px 40px 60px 40px;
+            /* Hintergrundbild mit transparentem Verlauf nach unten */
+            background: linear-gradient(to bottom, rgba(0,77,84,0.3), var(--bg-color)), 
+                        url('https://www.wochenblatt-dlv.de/sites/wochenblatt-dlv.de/files/styles/original/public/2019/07/wald-alt.jpg?itok=Es6KLLY1') no-repeat center center/cover;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .hero-content {
+            max-width: 600px;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            line-height: 1.1;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 25px;
+            opacity: 0.9;
+        }
+
+        .btn-more {
+            display: inline-block;
+            background-color: var(--accent-yellow);
+            color: #000;
+            padding: 12px 28px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: transform 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-more:hover {
+            transform: scale(1.05);
+        }
+
+        /* Modulare Kategorien & Film-Karussell */
+        .category-section {
+            padding: 30px 40px;
+        }
+
+        .category-title {
+            font-size: 1.6rem;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        /* Horizontale Scrollbar für Filme */
+        .movie-row {
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            padding-bottom: 15px;
+            scroll-behavior: smooth;
+        }
+
+        /* Scrollbar-Styling */
+        .movie-row::-webkit-scrollbar {
+            height: 8px;
+        }
+        .movie-row::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.2);
+            border-radius: 4px;
+        }
+
+        /* Film Karte (Klickbar als Link) */
+        .movie-card {
+            flex: 0 0 200px; /* Feste Breite der Karten */
+            text-decoration: none;
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s;
+        }
+
+        .movie-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .movie-thumb {
+            width: 100%;
+            height: 200px;
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            object-fit: cover;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .movie-name {
+            font-size: 0.95rem;
+            font-weight: bold;
+            margin-bottom: 4px;
+            line-height: 1.2;
+        }
+
+        .movie-desc {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            line-height: 1.3;
+        }
+
+        /* Passender Footer */
+        footer {
+            background-color: var(--bg-darker);
+            padding: 40px;
+            margin-top: 50px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .footer-links {
+            margin-bottom: 20px;
+        }
+
+        .footer-links a {
+            color: var(--text-color);
+            text-decoration: none;
+            margin: 0 15px;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent-yellow);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Dünner Strich ganz oben -->
+    <div class="top-line"></div>
+
+    <!-- Header-Bereich -->
+    <header>
+        <button class="menu-btn" onclick="toggleMenu()" aria-label="Menü öffnen">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <div class="logo">GBBView</div>
+        <!-- Lupe als SVG Text-Zeichen, um Emojis zu vermeiden -->
+        <button class="search-icon" aria-label="Suche">&#9094;</button> 
+    </header>
+
+    <!-- Seitliches Menü -->
+    <div class="menu-overlay" id="menuOverlay" onclick="toggleMenu()"></div>
+    <nav class="side-menu" id="sideMenu">
+        <ul>
+            <li><a href="#">Startseite</a></li>
+            <li><a href="#">Filme</a></li>
+            <li><a href="#">Serien</a></li>
+            <li><a href="#">Dokus</a></li>
+        </ul>
+    </nav>
+
+    <!-- Haupt-Banner (Hero) -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Das Geheimnis der Wälder</h1>
+            <p>Eine Wissensdoku von Gustav Gurke</p>
+            <a href="film-details-walder.html" class="btn-more">Mehr dazu</a>
+        </div>
+    </section>
+
+    <!-- KATEGORIE 1 (Modularer Aufbau) -->
+    <section class="category-section">
+        <div class="category-title">Die neuesten Filme und Serien</div>
+        <div class="movie-row">
+            
+            <!-- Film 1 -->
+            <a href="film-bus.html" class="movie-card">
+                <img class="movie-thumb" src="https://www.deutschebahn.com/resource/image/13700760/1:1/452/452/87f1de9bc9548584dd5520957c6f6c6b/9D8EBE803F26660BAFAFF19833C2DF66/PI-Busbeschaffung.jpg" alt="Der Bus">
+                <div class="movie-name">Der Bus</div>
+                <div class="movie-desc">Ein Film von Bärbel Essiggurke.</div>
+            </a>
+
+            <!-- Film 2 -->
+            <a href="film-zug.html" class="movie-card">
+                <img class="movie-thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRCwRR8cZbtFY85guX2qGNDwcpxHQ7bu15Y4rv-HtXv8ikAot2O4itIglPl&s=10" alt="Die Abenteuer des alten Zuges">
+                <div class="movie-name">Die Abenteuer des alten Zuges</div>
+                <div class="movie-desc">Ein romantischer Film von Paul Salatgurke.</div>
+            </a>
+
+            <!-- Film 3 -->
+            <a href="film-bahn.html" class="movie-card">
+                <img class="movie-thumb" src="https://image.stern.de/33936854/t/qC/v8/w1440/r1.7778/-/1.jpg" alt="Der Bahn-Film">
+                <div class="movie-name">Der Bahn-Film</div>
+                <div class="movie-desc">Eine Zuggereimte Reportage von Heinz Tomate.</div>
+            </a>
+
+            <!-- Film 4 -->
+            <a href="film-plankton.html" class="movie-card">
+                <img class="movie-thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRSeK-mXHQrQbQ3jaXJf_2zZD56QIXERcMBRy601yplDX6Al4MdWUfS6gk&s=10" alt="Plankton">
+                <div class="movie-name">Plankton und die Gründung Gurkistans</div>
+                <div class="movie-desc">Ein Dokumentarfilm über Monarch Plankton.</div>
+            </a>
+
+            <!-- Film 5 -->
+            <a href="film-potter.html" class="movie-card">
+                <img class="movie-thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT82-8f2-6XkYI1VxJjnkGZdxsvveT0B2gRJd6Alj2wjev9L5wzDu77WnvH&s=10" alt="Gurki Potter">
+                <div class="movie-name">Gurki Potter und die Kammer der Gurken</div>
+                <div class="movie-desc">Ein verzauberter Film von Werner Paprika.</div>
+            </a>
+
+            <!-- Film 6 -->
+            <a href="film-potter.html" class="movie-card">
+                <img class="movie-thumb" src="https://www.wochenblatt-dlv.de/sites/wochenblatt-dlv.de/files/styles/original/public/2019/07/wald-alt.jpg?itok=Es6KLLY1" alt="Wald">
+                <div class="movie-name">Das Geheimnis der Wälder</div>
+                <div class="movie-desc">Eine Wissensdoku von Gustav Gurke.</div>
+            </a>
+
+            <!-- Film 7 -->
+            <a href="film-potter.html" class="movie-card">
+                <img class="movie-thumb" src="" alt="Film 7">
+                <div class="movie-name">Film 7</div>
+                <div class="movie-desc">XYZ</div>
+            </a>
+
+            <!-- Film 8 -->
+            <a href="film-potter.html" class="movie-card">
+                <img class="movie-thumb" src="" alt="Film 8">
+                <div class="movie-name">Film 8</div>
+                <div class="movie-desc">XYZ</div>
+            </a>
+
+            <!-- Film 9 -->
+            <a href="film-potter.html" class="movie-card">
+                <img class="movie-thumb" src="" alt="Film 9">
+                <div class="movie-name">Film 9</div>
+                <div class="movie-desc">XYZ</div>
+            </a>
+
+            <!-- Film 10 -->
+            <a href="film-potter.html" class="movie-card">
+                <img class="movie-thumb" src="" alt="Film 10">
+                <div class="movie-name">Film 10</div>
+                <div class="movie-desc">XYZ</div>
+            </a>
+
+            <!-- Film 11 -->
+            <a href="film-potter.html" class="movie-card">
+                <img class="movie-thumb" src="" alt="Film 11">
+                <div class="movie-name">Film 11</div>
+                <div class="movie-desc">XYZ</div>
+            </a>
+
+            <!-- Film 12 -->
+            <a href="film-potter.html" class="movie-card">
+                <img class="movie-thumb" src="" alt="Film 12">
+                <div class="movie-name">Film 12</div>
+                <div class="movie-desc">XYZ</div>
+            </a>
+        </div>
+    </section>
+
+    <!-- KATEGORIE 2 (Einfach kopiert für den modularen Aufbau) -->
+    <section class="category-section">
+        <div class="category-title">Die beliebtesten Filme und Serien</div>
+        <div class="movie-row">
+            
+            <!-- Hier kannst du beliebig viele weitere Film-Karten einfügen -->
+            <a href="film-zug.html" class="movie-card">
+                <img class="movie-thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRCwRR8cZbtFY85guX2qGNDwcpxHQ7bu15Y4rv-HtXv8ikAot2O4itIglPl&s=10" alt="Die Abenteuer des alten Zuges">
+                <div class="movie-name">Die Abenteuer des alten Zuges</div>
+                <div class="movie-desc">Ein romantischer Film von Paul Salatgurke.</div>
+            </a>
+
+            <a href="film-potter.html" class="movie-card">
+                <img class="movie-thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT82-8f2-6XkYI1VxJjnkGZdxsvveT0B2gRJd6Alj2wjev9L5wzDu77WnvH&s=10" alt="Gurki Potter">
+                <div class="movie-name">Gurki Potter und die Kammer der Gurken</div>
+                <div class="movie-desc">Ein verzauberter Film von Werner Paprika.</div>
+            </a>
+
+            <a href="film-bahn.html" class="movie-card">
+                <img class="movie-thumb" src="https://image.stern.de/33936854/t/qC/v8/w1440/r1.7778/-/1.jpg" alt="Der Bahn-Film">
+                <div class="movie-name">Der Bahn-Film</div>
+                <div class="movie-desc">Eine Zuggereimte Reportage von Heinz Tomate.</div>
+            </a>
+
+            <a href="film-plankton.html" class="movie-card">
+                <img class="movie-thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRSeK-mXHQrQbQ3jaXJf_2zZD56QIXERcMBRy601yplDX6Al4MdWUfS6gk&s=10" alt="Plankton">
+                <div class="movie-name">Plankton und die Gründung Gurkistans</div>
+                <div class="movie-desc">Ein Dokumentarfilm über Monarch Plankton.</div>
+            </a>
+
+            <a href="film-potter.html" class="movie-card">
+                <img class="movie-thumb" src="https://www.wochenblatt-dlv.de/sites/wochenblatt-dlv.de/files/styles/original/public/2019/07/wald-alt.jpg?itok=Es6KLLY1" alt="Wald">
+                <div class="movie-name">Das Geheimnis der Wälder</div>
+                <div class="movie-desc">Eine Wissensdoku von Gustav Gurke.</div>
+            </a>
+
+            <a href="film-bus.html" class="movie-card">
+                <img class="movie-thumb" src="https://www.deutschebahn.com/resource/image/13700760/1:1/452/452/87f1de9bc9548584dd5520957c6f6c6b/9D8EBE803F26660BAFAFF19833C2DF66/PI-Busbeschaffung.jpg" alt="Der Bus">
+                <div class="movie-name">Der Bus</div>
+                <div class="movie-desc">Ein Film von Bärbel Essiggurke.</div>
+            </a>
+
+        </div>
+    </section>
+
+    <!-- HIER KANNST DU WEITERE KATEGORIEN EINFÜGEN -->
+
+    <!-- Passender Footer -->
+    <footer>
+        <div class="footer-links">
+            <a href="#">Impressum</a>
+            <a href="#">Datenschutz</a>
+            <a href="#">Kontakt</a>
+        </div>
+        <div>&copy; 2026 GBB. Alle Rechte vorbehalten. Website mit KI erstellt.</div>
+    </footer>
+
+    <!-- JavaScript für das Menü -->
+    <script>
+        function toggleMenu() {
+            const menu = document.getElementById('sideMenu');
+            const overlay = document.getElementById('menuOverlay');
+            
+            menu.classList.toggle('open');
+            overlay.classList.toggle('show');
+        }
+    </script>
+</body>
+</html>
